@@ -1,1 +1,3 @@
-# SSC
+# ssc_demo
+
+A new Flutter project.
