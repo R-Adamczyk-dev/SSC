@@ -32,33 +32,28 @@ const InvoiceIsarSchema = CollectionSchema(
       name: r'contractor',
       type: IsarType.string,
     ),
-    r'createdAt': PropertySchema(
-      id: 3,
-      name: r'createdAt',
-      type: IsarType.dateTime,
-    ),
     r'grossAmount': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'grossAmount',
       type: IsarType.double,
     ),
     r'id': PropertySchema(
-      id: 5,
+      id: 4,
       name: r'id',
       type: IsarType.string,
     ),
     r'invoiceNumber': PropertySchema(
-      id: 6,
+      id: 5,
       name: r'invoiceNumber',
       type: IsarType.string,
     ),
     r'netAmount': PropertySchema(
-      id: 7,
+      id: 6,
       name: r'netAmount',
       type: IsarType.double,
     ),
     r'vatRate': PropertySchema(
-      id: 8,
+      id: 7,
       name: r'vatRate',
       type: IsarType.byte,
       enumMap: _InvoiceIsarvatRateEnumValueMap,
@@ -125,12 +120,11 @@ void _invoiceIsarSerialize(
   writer.writeString(offsets[0], object.attachmentName);
   writer.writeString(offsets[1], object.attachmentPath);
   writer.writeString(offsets[2], object.contractor);
-  writer.writeDateTime(offsets[3], object.createdAt);
-  writer.writeDouble(offsets[4], object.grossAmount);
-  writer.writeString(offsets[5], object.id);
-  writer.writeString(offsets[6], object.invoiceNumber);
-  writer.writeDouble(offsets[7], object.netAmount);
-  writer.writeByte(offsets[8], object.vatRate.index);
+  writer.writeDouble(offsets[3], object.grossAmount);
+  writer.writeString(offsets[4], object.id);
+  writer.writeString(offsets[5], object.invoiceNumber);
+  writer.writeDouble(offsets[6], object.netAmount);
+  writer.writeByte(offsets[7], object.vatRate.index);
 }
 
 InvoiceIsar _invoiceIsarDeserialize(
@@ -143,14 +137,13 @@ InvoiceIsar _invoiceIsarDeserialize(
   object.attachmentName = reader.readStringOrNull(offsets[0]);
   object.attachmentPath = reader.readStringOrNull(offsets[1]);
   object.contractor = reader.readString(offsets[2]);
-  object.createdAt = reader.readDateTime(offsets[3]);
-  object.grossAmount = reader.readDouble(offsets[4]);
-  object.id = reader.readString(offsets[5]);
-  object.invoiceNumber = reader.readString(offsets[6]);
+  object.grossAmount = reader.readDouble(offsets[3]);
+  object.id = reader.readString(offsets[4]);
+  object.invoiceNumber = reader.readString(offsets[5]);
   object.isarId = id;
-  object.netAmount = reader.readDouble(offsets[7]);
+  object.netAmount = reader.readDouble(offsets[6]);
   object.vatRate =
-      _InvoiceIsarvatRateValueEnumMap[reader.readByteOrNull(offsets[8])] ??
+      _InvoiceIsarvatRateValueEnumMap[reader.readByteOrNull(offsets[7])] ??
           VatRate.zero;
   return object;
 }
@@ -169,16 +162,14 @@ P _invoiceIsarDeserializeProp<P>(
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readDateTime(offset)) as P;
-    case 4:
       return (reader.readDouble(offset)) as P;
+    case 4:
+      return (reader.readString(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
-    case 7:
       return (reader.readDouble(offset)) as P;
-    case 8:
+    case 7:
       return (_InvoiceIsarvatRateValueEnumMap[reader.readByteOrNull(offset)] ??
           VatRate.zero) as P;
     default:
@@ -783,62 +774,6 @@ extension InvoiceIsarQueryFilter
   }
 
   QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterFilterCondition>
-      createdAtEqualTo(DateTime value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'createdAt',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterFilterCondition>
-      createdAtGreaterThan(
-    DateTime value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'createdAt',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterFilterCondition>
-      createdAtLessThan(
-    DateTime value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'createdAt',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterFilterCondition>
-      createdAtBetween(
-    DateTime lower,
-    DateTime upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'createdAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterFilterCondition>
       grossAmountEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -1391,18 +1326,6 @@ extension InvoiceIsarQuerySortBy
     });
   }
 
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterSortBy> sortByCreatedAt() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'createdAt', Sort.asc);
-    });
-  }
-
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterSortBy> sortByCreatedAtDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'createdAt', Sort.desc);
-    });
-  }
-
   QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterSortBy> sortByGrossAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'grossAmount', Sort.asc);
@@ -1505,18 +1428,6 @@ extension InvoiceIsarQuerySortThenBy
     });
   }
 
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterSortBy> thenByCreatedAt() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'createdAt', Sort.asc);
-    });
-  }
-
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterSortBy> thenByCreatedAtDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'createdAt', Sort.desc);
-    });
-  }
-
   QueryBuilder<InvoiceIsar, InvoiceIsar, QAfterSortBy> thenByGrossAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'grossAmount', Sort.asc);
@@ -1616,12 +1527,6 @@ extension InvoiceIsarQueryWhereDistinct
     });
   }
 
-  QueryBuilder<InvoiceIsar, InvoiceIsar, QDistinct> distinctByCreatedAt() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'createdAt');
-    });
-  }
-
   QueryBuilder<InvoiceIsar, InvoiceIsar, QDistinct> distinctByGrossAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'grossAmount');
@@ -1681,12 +1586,6 @@ extension InvoiceIsarQueryProperty
   QueryBuilder<InvoiceIsar, String, QQueryOperations> contractorProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'contractor');
-    });
-  }
-
-  QueryBuilder<InvoiceIsar, DateTime, QQueryOperations> createdAtProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'createdAt');
     });
   }
 

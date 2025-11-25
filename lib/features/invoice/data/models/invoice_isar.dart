@@ -1,9 +1,8 @@
-// lib/features/invoice/data/models/invoice_isar.dart
 import 'package:isar/isar.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/entities/vat_rate.dart';
 
-part 'invoice_isar.g.dart'; // tylko Isar generator
+part 'invoice_isar.g.dart';
 
 @Collection()
 class InvoiceIsar {
@@ -19,7 +18,6 @@ class InvoiceIsar {
   VatRate vatRate = VatRate.twentyThree;
 
   double grossAmount = 0.0;
-  DateTime createdAt = DateTime.now();
   String? attachmentPath;
   String? attachmentName;
 
@@ -32,7 +30,6 @@ class InvoiceIsar {
     required double netAmount,
     required VatRate vatRate,
     required double grossAmount,
-    required DateTime createdAt,
     this.attachmentPath,
     this.attachmentName,
   }) {
@@ -42,7 +39,8 @@ class InvoiceIsar {
     this.netAmount = netAmount;
     this.vatRate = vatRate;
     this.grossAmount = grossAmount;
-    this.createdAt = createdAt;
+    this.attachmentName = attachmentPath;
+    this.attachmentPath = attachmentPath;
   }
 
   InvoiceIsar.fromDomain(Invoice invoice) {
@@ -52,7 +50,6 @@ class InvoiceIsar {
     netAmount = invoice.netAmount;
     vatRate = invoice.vatRate;
     grossAmount = invoice.grossAmount;
-    createdAt = invoice.createdAt;
     attachmentPath = invoice.attachmentPath;
     attachmentName = invoice.attachmentName;
   }
@@ -64,7 +61,19 @@ class InvoiceIsar {
         netAmount: netAmount,
         vatRate: vatRate,
         grossAmount: grossAmount,
-        createdAt: createdAt,
+        attachmentPath: attachmentPath,
+        attachmentName: attachmentName,
+      );
+}
+
+extension InvoiceIsarX on InvoiceIsar {
+  Invoice toDomain() => Invoice(
+        id: id,
+        invoiceNumber: invoiceNumber,
+        contractor: contractor,
+        netAmount: netAmount,
+        vatRate: vatRate,
+        grossAmount: grossAmount,
         attachmentPath: attachmentPath,
         attachmentName: attachmentName,
       );

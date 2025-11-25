@@ -1,24 +1,29 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:ssc_invoice_app/core/di/injection.dart';
 import 'package:ssc_invoice_app/features/invoice/domain/entities/vat_rate.dart';
-import 'package:ssc_invoice_app/features/invoice/presentation/cubit/invoice_form_state.dart';
-import '../cubit/invoice_form_cubit.dart';
+import 'package:ssc_invoice_app/features/invoice/presentation/cubit/invoice_form/invoice_form_cubit.dart';
+import 'package:ssc_invoice_app/features/invoice/presentation/cubit/invoice_form/invoice_form_state.dart';
+import 'package:ssc_invoice_app/features/invoice/presentation/cubit/invoice_list/invoice_list_cubit.dart';
 
 class InvoiceFormPage extends StatelessWidget {
-  final String? editId;
+  final String? invoiceId;
 
-  const InvoiceFormPage({super.key, this.editId});
+  const InvoiceFormPage({super.key, this.invoiceId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => InvoiceFormCubit(editId),
+      create: (_) => getIt<InvoiceFormCubit>()..loadInvoice(invoiceId),
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/'),
+            onPressed: () => context.pop(),
           ),
           title: Row(
             mainAxisSize: MainAxisSize.min,
@@ -27,7 +32,7 @@ class InvoiceFormPage extends StatelessWidget {
               const SizedBox(width: 12),
               Flexible(
                 child: Text(
-                  editId == null ? 'Nowa faktura' : 'Edytuj fakturę',
+                  invoiceId == null ? 'Nowa faktura' : 'Edytuj fakturę',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -38,22 +43,33 @@ class InvoiceFormPage extends StatelessWidget {
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
           actions: [
-            // PRZYCISK SAVE JEST TERAZ WEWNĄTRZ BlocProvider!
-            BlocBuilder<InvoiceFormCubit, InvoiceFormState>(
+            BlocConsumer<InvoiceFormCubit, InvoiceFormState>(
+              listener: (context, state) {
+                if (state.saved) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Faktura zapisana pomyślnie!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+
+                  context.read<InvoiceListCubit>().loadInvoices();
+
+                  context.pop();
+                }
+                if (state.error != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(state.error!),
+                        backgroundColor: Colors.red),
+                  );
+                }
+              },
               builder: (context, state) {
                 return IconButton(
                   icon: const Icon(Icons.save),
                   onPressed: () async {
-                    final saved = await context.read<InvoiceFormCubit>().save();
-                    if (saved && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Faktura zapisana!'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                      context.go('/');
-                    }
+                    await context.read<InvoiceFormCubit>().save();
                   },
                 );
               },
@@ -63,7 +79,7 @@ class InvoiceFormPage extends StatelessWidget {
         body: const Padding(
           padding: EdgeInsets.all(16),
           child: SingleChildScrollView(
-            child: _InvoiceFormBody(), // <-- Twój piękny formularz
+            child: _InvoiceFormBody(),
           ),
         ),
       ),
@@ -73,6 +89,18 @@ class InvoiceFormPage extends StatelessWidget {
 
 class _InvoiceFormBody extends StatelessWidget {
   const _InvoiceFormBody();
+
+  void _openAttachment(BuildContext context, String path) async {
+    final result = await OpenFilex.open(path);
+    if (result.type != ResultType.done && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Nie można otworzyć pliku: ${result.message}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +160,7 @@ class _InvoiceFormBody extends StatelessWidget {
 
             // 4. Stawka VAT
             DropdownButtonFormField<VatRate>(
+              initialValue: state.vatRate,
               decoration: const InputDecoration(labelText: 'Stawka VAT'),
               items: VatRate.values
                   .map((v) =>
@@ -156,33 +185,75 @@ class _InvoiceFormBody extends StatelessWidget {
 
             // 6. Załącznik
             Card(
-              elevation: 2,
-              child: ListTile(
-                leading: Icon(
-                  state.attachmentName == null
-                      ? Icons.attach_file
-                      : Icons.description,
-                  color:
-                      state.attachmentName == null ? Colors.grey : Colors.green,
-                ),
-                title: Text(
-                  state.attachmentName ?? 'Dodaj załącznik (PDF/zdjęcie)',
-                  style: TextStyle(
-                    color: state.attachmentName == null
-                        ? Colors.grey
-                        : Colors.black87,
-                    fontWeight: state.attachmentName == null
-                        ? FontWeight.normal
-                        : FontWeight.bold,
+              elevation: 3,
+              child: InkWell(
+                onTap: state.attachmentPath != null
+                    ? () => _openAttachment(context, state.attachmentPath!)
+                    : cubit.pickAttachment,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: state.attachmentPath != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: state.attachmentPath!
+                                        .toLowerCase()
+                                        .endsWith('.pdf')
+                                    ? const Icon(Icons.picture_as_pdf,
+                                        color: Colors.red, size: 40)
+                                    : Image.file(
+                                        File(state.attachmentPath!),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.image, size: 40),
+                                      ),
+                              )
+                            : const Icon(Icons.attach_file,
+                                color: Colors.grey, size: 40),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              state.attachmentName ??
+                                  'Dodaj załącznik (PDF/zdjęcie)',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: state.attachmentName != null
+                                    ? Colors.black87
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                            if (state.attachmentName != null)
+                              Text(
+                                'Kliknij, aby otworzyć',
+                                style: TextStyle(
+                                    color: Colors.blue[700], fontSize: 12),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // PRZYCISK USUŃ
+                      if (state.attachmentName != null)
+                        IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.red),
+                          onPressed: cubit.removeAttachment,
+                        )
+                      else
+                        const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    ],
                   ),
                 ),
-                trailing: state.attachmentName != null
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.red),
-                        onPressed: cubit.removeAttachment,
-                      )
-                    : null,
-                onTap: cubit.pickAttachment,
               ),
             ),
             const SizedBox(height: 40),

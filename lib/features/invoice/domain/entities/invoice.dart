@@ -1,4 +1,3 @@
-
 import 'package:equatable/equatable.dart';
 import 'vat_rate.dart';
 
@@ -9,7 +8,6 @@ class Invoice extends Equatable {
   final double netAmount;
   final VatRate vatRate;
   final double grossAmount;
-  final DateTime createdAt;
   final String? attachmentPath;
   final String? attachmentName;
 
@@ -20,7 +18,6 @@ class Invoice extends Equatable {
     required this.netAmount,
     required this.vatRate,
     required this.grossAmount,
-    required this.createdAt,
     this.attachmentPath,
     this.attachmentName,
   });
@@ -33,7 +30,6 @@ class Invoice extends Equatable {
         netAmount,
         vatRate,
         grossAmount,
-        createdAt,
         attachmentPath,
       ];
 }

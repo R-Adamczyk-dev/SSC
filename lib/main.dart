@@ -1,26 +1,21 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ssc_invoice_app/core/database/isar_service.dart';
+import 'package:ssc_invoice_app/features/invoice/presentation/cubit/invoice_list/invoice_list_cubit.dart';
 import 'core/di/injection.dart';
 import 'core/router.dart';
-import 'features/invoice/data/models/invoice_isar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open(
-    [InvoiceIsarSchema],
-    directory: dir.path,
-  );
-
-
-  getIt.registerSingleton<Isar>(isar);
-
   await configureDependencies();
-  runApp(const MyApp());
+  await getIt<IsarService>().init();
+  runApp(
+    BlocProvider(
+      create: (_) => getIt<InvoiceListCubit>()..loadInvoices(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
